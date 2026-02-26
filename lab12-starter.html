@@ -339,15 +339,16 @@
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     // Player names are categorical — choose the scale type that fits.
-    const xScale = d3.scaleLinear()
+    const xScale = d3.scaleBand()
       .domain(filtered.map(d => d.name))
-      .range([0, width]);
+      .range([0, width])
+      .padding(0.1);
 
     // The domain maps data values; the range maps to pixel positions.
     // Remember: in SVG, y=0 is at the top of the screen.
     const yScale = d3.scaleLinear()
-      .domain([height, 0])
-      .range([0, d3.max(filtered, d => d[activeStat]) * 1.1]);
+      .domain([0, d3.max(filtered, d => d[activeStat])])
+      .range([height, 0]);
 
     // Gridlines
     g.append("g").attr("class", "gridlines")
@@ -366,9 +367,9 @@
       .attr("class", "bar")
       .attr("fill", "#c9082a")
       // Each bar's x position and width should come from the scale that handles player names.
-      .attr("x",      d => yScale(d.name))
+      .attr("x",      d => xScale(d.name))
       .attr("y",      d => yScale(d[activeStat]))
-      .attr("width",  yScale.bandwidth())
+      .attr("width",  xScale.bandwidth())
       .attr("height", d => height - yScale(d[activeStat]))
       .attr("rx", 3);
 
@@ -383,12 +384,13 @@
       .text(d => d[activeStat].toFixed(1));
 
     // Match each axis constructor to the correct scale and orientation.
-    const xAxis = d3.axisLeft(xScale);
-    const yAxis = d3.axisBottom(yScale).ticks(5);
+    const xAxis = d3.axisBottom(xScale);
+    const yAxis = d3.axisLeft(yScale).ticks(5);
 
     // The x-axis should appear at the bottom of the chart area.
     g.append("g")
       .attr("class", "axis")
+      .attr("transform", `translate(0, ${height})`)
       .call(xAxis)
       .selectAll("text")
       .attr("transform", "rotate(-35)")
@@ -398,7 +400,6 @@
 
     g.append("g")
       .attr("class", "axis")
-      .attr("transform", `translate(0, ${height})`)
       .call(yAxis);
 
     // Y-axis label
